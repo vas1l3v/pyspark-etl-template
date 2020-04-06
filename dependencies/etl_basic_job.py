@@ -2,7 +2,8 @@ import os
 from pyspark.sql import SparkSession
 from pyspark import SparkConf
 from dependencies import logging
-
+from dependencies.utils import *
+from pyspark.sql.types import IntegerType, DoubleType
 
 """
 Basic job class which initializes spark session, logger wrapper class
@@ -34,6 +35,9 @@ class ETLBasicJob(object):
 
         # init session
         self.spark = spark_builder.getOrCreate()
+        # register custom udfs
+        self.spark.udf.register("convertFeetToCm", convert_feet_to_cm, IntegerType())
+        self.spark.udf.register("convertLbsToKg", convert_lbs_to_kg, DoubleType())
         # set debug log level
         self.spark.sparkContext.setLogLevel("INFO")
         # init logger

@@ -2,6 +2,7 @@ from dependencies.etl_basic_job import ETLBasicJob
 from pyspark.sql.types import StructType, StructField, IntegerType, DateType, TimestampType, StringType, DoubleType\
     , BooleanType
 from pyspark.sql.functions import *
+from dependencies.utils import *
 
 
 class ETLSubmitJob(ETLBasicJob):
@@ -20,7 +21,6 @@ class ETLSubmitJob(ETLBasicJob):
             # execute ETL pipeline
             raw_data = self._extract_data()
             transformed_data = self._transform_data(raw_data)
-            transformed_data.show()
             self._load_data(transformed_data)
 
         except Exception:
@@ -30,7 +30,11 @@ class ETLSubmitJob(ETLBasicJob):
             self._close_spark_session()
 
     def _extract_data(self):
+        self.logger.info("extracting data")
         target_schema = self._get_target_schema()
+        filepath = "/source/fifa/players.2019.csv"
+        load_date = get_file_load_year(filepath)
+
         # no schema inference
         df = self.spark.read \
             .format("com.databricks.spark.csv") \
@@ -38,15 +42,18 @@ class ETLSubmitJob(ETLBasicJob):
             .option("delimiter", ",") \
             .option("header", "true") \
             .option("dateFormat", "MMMM dd, yyyy") \
-            .load("/source/fifa/players.2019.csv")
+            .load(filepath)
         #TO DO
         # get game_year from filename, do not leave it hardcoded
-        df = df.withColumn("game_year", lit(2019))
-        df.show()
+        df = df.withColumn("game_year", lit(load_date))
         return df
 
     def _transform_data(self, df_raw):
-        df_transformed = df_raw.select(col("ID")
+        self.logger.info("transforming data...")
+        convert_feet_to_cm_udf = udf(convert_feet_to_cm, IntegerType())
+        convert_lbs_to_kg_udf = udf(convert_lbs_to_kg, DoubleType())
+        df_transformed = df_raw.select(col("game_year")
+                                       , col("ID")
                                        , col("Name")
                                        , col("Club")
                                        , col("Value")
@@ -56,6 +63,8 @@ class ETLSubmitJob(ETLBasicJob):
                                        , col("Height")
                                        , col("Weight")
                                        ) \
+                               .withColumn("Height", convert_feet_to_cm_udf(col("Height"))) \
+                               .withColumn("Weight", convert_lbs_to_kg_udf(col("Weight"))) \
                                .where(
                                     (col("ShotPower") > 80)
                                     & (col("Jumping") > 85)
@@ -66,7 +75,8 @@ class ETLSubmitJob(ETLBasicJob):
     def _load_data(self, df_to_load):
         # TO DO
         # Load to parquet
-        self.logger.info("load data")
+        df_to_load.show()
+        self.logger.info("loading data")
 
     @staticmethod
     def _get_target_schema():
