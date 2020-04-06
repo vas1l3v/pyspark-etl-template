@@ -38,7 +38,7 @@ class ETLSubmitJob(ETLBasicJob):
             .option("delimiter", ",") \
             .option("header", "true") \
             .option("dateFormat", "MMMM dd, yyyy") \
-            .load("/source/fifa/players.csv")
+            .load("/source/fifa/players.2019.csv")
         #TO DO
         # get game_year from filename, do not leave it hardcoded
         df = df.withColumn("game_year", lit(2019))
