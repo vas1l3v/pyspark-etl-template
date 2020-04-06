@@ -73,10 +73,11 @@ class ETLSubmitJob(ETLBasicJob):
         return df_transformed
 
     def _load_data(self, df_to_load):
-        # TO DO
-        # Load to parquet
-        df_to_load.show()
+        # Load in parquet format to hdfs
         self.logger.info("loading data")
+        df_to_load.write \
+            .mode("overwrite") \
+            .save("/target/fifa/header_players.parquet", format="parquet")
 
     @staticmethod
     def _get_target_schema():
