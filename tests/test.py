@@ -1,6 +1,6 @@
 import unittest
 
-class etlTest(unittest.TestCase):
+class ETLTest(unittest.TestCase):
 
     def test_etl(self):
         for i in range(0, 5):
