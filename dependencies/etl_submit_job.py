@@ -16,10 +16,9 @@ class ETLSubmitJob(ETLBasicJob):
             self._get_spark_session()
 
             self.logger.info("Job is starting")
-            # TODO write code for the job
 
             # execute ETL pipeline
-            raw_data = self._extract_data()
+            raw_data = self._extract_data("/source/fifa/players.2019.csv")
             transformed_data = self._transform_data(raw_data)
             self._load_data(transformed_data)
 
@@ -29,10 +28,9 @@ class ETLSubmitJob(ETLBasicJob):
             # close spark session
             self._close_spark_session()
 
-    def _extract_data(self):
+    def _extract_data(self, filepath):
         self.logger.info("extracting data")
         target_schema = self._get_target_schema()
-        filepath = "/source/fifa/players.2019.csv"
         load_date = get_file_load_year(filepath)
 
         # no schema inference
